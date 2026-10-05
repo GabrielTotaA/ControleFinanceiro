@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
+    @ExceptionHandler (PeriodoInvalidoException.class)
+    public ResponseEntity<String> tratarPeriodoInvalido(PeriodoInvalidoException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     @ExceptionHandler (CategoriaNaoPertenceAoUsuarioException.class)
     public ResponseEntity<String> tratarCategoriaNaoPertenceAoUsuarioException(CategoriaNaoPertenceAoUsuarioException ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());

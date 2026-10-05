@@ -1,7 +1,10 @@
 package com.financeiro.financeiro.service;
 
+import com.financeiro.financeiro.dto.ResumoCategoriaDTO;
+import com.financeiro.financeiro.dto.ResumoDTO;
 import com.financeiro.financeiro.exception.CategoriaNaoEncontradaException;
 import com.financeiro.financeiro.exception.CategoriaNaoPertenceAoUsuarioException;
+import com.financeiro.financeiro.exception.PeriodoInvalidoException;
 import com.financeiro.financeiro.exception.UsuarioNaoEncontradoException;
 import com.financeiro.financeiro.model.*;
 import com.financeiro.financeiro.repository.CategoriaRepository;
@@ -41,6 +44,25 @@ public class TransacaoService {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado: " + idUsuario));
         return transacaoRepository.findByUsuario(usuario);
+    }
+
+    public ResumoDTO resumir(Long idUsuario, LocalDate inicio, LocalDate fim) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado: " + idUsuario));
+        if (inicio.isAfter(fim)) {
+            throw new PeriodoInvalidoException("A data inicial deve ser anterior ou igual à data final");
+        }
+        List<ResumoCategoriaDTO> porCategoria = transacaoRepository.somarPorCategoria(usuario, inicio, fim);
+        BigDecimal totalEntradas = somarPorTipo(porCategoria, TipoTransacao.ENTRADA);
+        BigDecimal totalSaidas = somarPorTipo(porCategoria, TipoTransacao.SAIDA);
+        return new ResumoDTO(totalEntradas, totalSaidas, totalEntradas.subtract(totalSaidas), porCategoria);
+    }
+
+    private BigDecimal somarPorTipo(List<ResumoCategoriaDTO> linhas, TipoTransacao tipo) {
+        return linhas.stream()
+                .filter(linha -> linha.tipo() == tipo)
+                .map(ResumoCategoriaDTO::total)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<Transacao> listarTodos(){

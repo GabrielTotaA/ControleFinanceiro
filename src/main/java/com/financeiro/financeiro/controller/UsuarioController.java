@@ -27,7 +27,7 @@ public class UsuarioController {
         return service.listarTodos();
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     public ResponseEntity<Usuario> buscarPeloId(@PathVariable Long id){
         return service.buscarPorId(id)
                 .map(ResponseEntity::ok)

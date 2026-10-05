@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/categoria")
+@RequestMapping("/categorias")
 public class CategoriaController {
     private final CategoriaService service;
     public CategoriaController(CategoriaService service){
@@ -29,7 +29,7 @@ public class CategoriaController {
         return service.listarTodos();
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     public ResponseEntity<Categoria> buscarPeloId(@PathVariable Long id){
         return service.buscarPorId(id)
                 .map(ResponseEntity::ok)

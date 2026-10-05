@@ -1,10 +1,13 @@
 package com.financeiro.financeiro.controller;
 
+import com.financeiro.financeiro.dto.ResumoDTO;
 import com.financeiro.financeiro.dto.TransacaoRequestDTO;
 import com.financeiro.financeiro.model.Transacao;
 import com.financeiro.financeiro.service.TransacaoService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,5 +26,12 @@ public class TransacaoController {
     @GetMapping
     public List<Transacao> listarPorUsuario(@RequestParam Long idUsuario){
         return service.listarPorUsuario(idUsuario);
+    }
+
+    @GetMapping("/resumo")
+    public ResumoDTO resumo(@RequestParam Long idUsuario,
+                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim){
+        return service.resumir(idUsuario, inicio, fim);
     }
 }
