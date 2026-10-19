@@ -7,6 +7,8 @@ import com.financeiro.financeiro.dto.TransacaoAtualizacaoDTO;
 import com.financeiro.financeiro.dto.TransacaoResponseDTO;
 import com.financeiro.financeiro.service.TransacaoService;
 import org.springframework.format.annotation.DateTimeFormat;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +25,19 @@ public class TransacaoController {
     }
 
     @PostMapping
-    public TransacaoResponseDTO criar(@AuthenticationPrincipal Jwt jwt, @RequestBody TransacaoRequestDTO dto){
+    public TransacaoResponseDTO criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody TransacaoRequestDTO dto){
         return service.criar(UsuarioLogado.id(jwt), dto.valor(), dto.data(), dto.tipo(), dto.idCategoria(), dto.formaPagamento());
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id){
+        service.excluir(id, UsuarioLogado.id(jwt));
     }
 
     @PutMapping("/{id}")
     public TransacaoResponseDTO atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
-                                          @RequestBody TransacaoAtualizacaoDTO dto){
+                                          @Valid @RequestBody TransacaoAtualizacaoDTO dto){
         return service.atualizar(id, UsuarioLogado.id(jwt), dto.valor(), dto.data(), dto.tipo(), dto.idCategoria(), dto.formaPagamento());
     }
 

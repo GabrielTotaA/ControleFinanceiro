@@ -2,6 +2,7 @@ package com.financeiro.financeiro.service;
 
 
 import com.financeiro.financeiro.dto.CategoriaResponseDTO;
+import com.financeiro.financeiro.exception.CategoriaEmUsoException;
 import com.financeiro.financeiro.exception.CategoriaNaoEncontradaException;
 import com.financeiro.financeiro.exception.CategoriaNaoPertenceAoUsuarioException;
 import com.financeiro.financeiro.exception.UsuarioNaoEncontradoException;
@@ -10,6 +11,7 @@ import com.financeiro.financeiro.model.Usuario;
 import com.financeiro.financeiro.repository.CategoriaRepository;
 import com.financeiro.financeiro.repository.TransacaoRepository;
 import com.financeiro.financeiro.repository.UsuarioRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,17 +41,34 @@ public class CategoriaService {
         return repository.listarComTotalPorUsuario(usuario);
     }
 
+    public void excluir(Long id, Long idUsuario){
+        Categoria categoria = buscarEditavel(id, idUsuario);
+        if (transacaoRepository.countByCategoria(categoria) > 0){
+            throw new CategoriaEmUsoException("Esta categoria tem transações. Mova ou exclua as transações antes de excluí-la");
+        }
+        try {
+            repository.delete(categoria);
+        } catch (DataIntegrityViolationException e){
+            throw new CategoriaEmUsoException("Esta categoria tem transações. Mova ou exclua as transações antes de excluí-la");
+        }
+    }
+
     public CategoriaResponseDTO atualizar(Long id, Long idUsuario, String nome){
+        Categoria categoria = buscarEditavel(id, idUsuario);
+        categoria.renomear(nome);
+        repository.save(categoria);
+        return new CategoriaResponseDTO(categoria.getId(), categoria.getNome(), transacaoRepository.countByCategoria(categoria));
+    }
+
+    private Categoria buscarEditavel(Long id, Long idUsuario){
         Categoria categoria = repository.findById(id)
                 .orElseThrow(() -> new CategoriaNaoEncontradaException("Categoria não encontrada: " + id));
         if (categoria.getUsuario() == null){
-            throw new CategoriaNaoPertenceAoUsuarioException("Categorias compartilhadas não podem ser editadas");
+            throw new CategoriaNaoPertenceAoUsuarioException("Categorias compartilhadas não podem ser alteradas");
         }
         if (!categoria.getUsuario().getId().equals(idUsuario)){
             throw new CategoriaNaoEncontradaException("Categoria não encontrada: " + id);
         }
-        categoria.renomear(nome);
-        repository.save(categoria);
-        return new CategoriaResponseDTO(categoria.getId(), categoria.getNome(), transacaoRepository.countByCategoria(categoria));
+        return categoria;
     }
 }

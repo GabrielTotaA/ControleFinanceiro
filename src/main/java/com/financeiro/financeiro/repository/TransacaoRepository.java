@@ -14,7 +14,7 @@ import java.util.List;
 public interface TransacaoRepository extends JpaRepository<Transacao,Long> {
     long countByCategoria(Categoria categoria);
 
-    @Query("SELECT t FROM Transacao t WHERE t.usuario = :usuario")
+    @Query("SELECT t FROM Transacao t JOIN FETCH t.categoria WHERE t.usuario = :usuario")
     List<Transacao> findByUsuario(@Param("usuario") Usuario usuario);
 
     @Query("SELECT new com.financeiro.financeiro.dto.ResumoCategoriaDTO(t.categoria.nome, t.tipo, SUM(t.valor)) " +

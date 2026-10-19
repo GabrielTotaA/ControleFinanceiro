@@ -2,8 +2,12 @@ package com.financeiro.financeiro.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,6 +25,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler (TransacaoNaoEncontradaException.class)
     public ResponseEntity<String> tratarTransacaoNaoEncontrada(TransacaoNaoEncontradaException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler (MethodArgumentNotValidException.class)
+    public ResponseEntity<String> tratarValidacao(MethodArgumentNotValidException ex){
+        String mensagem = ex.getBindingResult().getFieldErrors().stream()
+                .map(erro -> erro.getDefaultMessage())
+                .distinct()
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+    }
+
+    @ExceptionHandler (HttpMessageNotReadableException.class)
+    public ResponseEntity<String> tratarCorpoInvalido(HttpMessageNotReadableException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Corpo da requisição inválido");
+    }
+
+    @ExceptionHandler (MuitasTentativasException.class)
+    public ResponseEntity<String> tratarMuitasTentativas(MuitasTentativasException ex){
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(ex.getMessage());
+    }
+
+    @ExceptionHandler (CategoriaEmUsoException.class)
+    public ResponseEntity<String> tratarCategoriaEmUso(CategoriaEmUsoException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
     @ExceptionHandler (EmailJaCadastradoException.class)

@@ -12,8 +12,6 @@ import com.financeiro.financeiro.model.*;
 import com.financeiro.financeiro.repository.CategoriaRepository;
 import com.financeiro.financeiro.repository.TransacaoRepository;
 import com.financeiro.financeiro.repository.UsuarioRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,9 +34,7 @@ public class TransacaoService {
                            FormaPagamento formaPagamento){
         Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(() -> new UsuarioNaoEncontradoException("Erro ao cadastrar transacao, usuario nao encontrado"));
         Categoria categoria = categoriaRepository.findById(idCategoria).orElseThrow(() -> new CategoriaNaoEncontradaException("Erro ao cadastrar transacao, categoria nao encontrada"));
-        if (categoria.getUsuario() != null && !categoria.getUsuario().getId().equals(usuario.getId())){
-            throw new CategoriaNaoPertenceAoUsuarioException("Essa categoria não pertence a este usuário");
-        }
+        validarCategoriaDoUsuario(categoria, usuario.getId());
         return TransacaoResponseDTO.de(transacaoRepository.save(new Transacao(valor,data,categoria, formaPagamento,tipo,usuario)));
     }
 
@@ -49,11 +45,22 @@ public class TransacaoService {
                 .orElseThrow(() -> new TransacaoNaoEncontradaException("Transação não encontrada: " + id));
         Categoria categoria = categoriaRepository.findById(idCategoria)
                 .orElseThrow(() -> new CategoriaNaoEncontradaException("Erro ao atualizar transacao, categoria nao encontrada"));
-        if (categoria.getUsuario() != null && !categoria.getUsuario().getId().equals(transacao.getUsuario().getId())){
-            throw new CategoriaNaoPertenceAoUsuarioException("Essa categoria não pertence a este usuário");
-        }
+        validarCategoriaDoUsuario(categoria, idUsuario);
         transacao.atualizar(valor, data, categoria, formaPagamento, tipo);
         return TransacaoResponseDTO.de(transacaoRepository.save(transacao));
+    }
+
+    private void validarCategoriaDoUsuario(Categoria categoria, Long idUsuario){
+        if (categoria.getUsuario() != null && !categoria.getUsuario().getId().equals(idUsuario)){
+            throw new CategoriaNaoPertenceAoUsuarioException("Essa categoria não pertence a este usuário");
+        }
+    }
+
+    public void excluir(Long id, Long idUsuario){
+        Transacao transacao = transacaoRepository.findById(id)
+                .filter(t -> t.getUsuario().getId().equals(idUsuario))
+                .orElseThrow(() -> new TransacaoNaoEncontradaException("Transação não encontrada: " + id));
+        transacaoRepository.delete(transacao);
     }
 
     public List<TransacaoResponseDTO> listarPorUsuario(Long idUsuario) {
@@ -79,10 +86,6 @@ public class TransacaoService {
                 .filter(linha -> linha.tipo() == tipo)
                 .map(ResumoCategoriaDTO::total)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public List<Transacao> listarTodos(){
-        return transacaoRepository.findAll();
     }
 
 }

@@ -1,6 +1,5 @@
 package com.financeiro.financeiro.model;
 
-import com.financeiro.financeiro.exception.UsuarioNaoEncontradoException;
 import com.financeiro.financeiro.exception.ValorInvalidoException;
 import jakarta.persistence.*;
 
@@ -46,7 +45,7 @@ public class Transacao {
     }
 
     private static void validarValor(BigDecimal valor){
-        if(valor.compareTo(BigDecimal.ZERO) <= 0){
+        if(valor == null || valor.compareTo(BigDecimal.ZERO) <= 0){
             throw new ValorInvalidoException("O valor da transação deve ser maior que zero");
         }
     }
