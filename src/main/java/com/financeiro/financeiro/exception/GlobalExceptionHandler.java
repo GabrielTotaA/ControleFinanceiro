@@ -18,6 +18,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @ExceptionHandler (TransacaoNaoEncontradaException.class)
+    public ResponseEntity<String> tratarTransacaoNaoEncontrada(TransacaoNaoEncontradaException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler (EmailJaCadastradoException.class)
+    public ResponseEntity<String> tratarEmailJaCadastrado(EmailJaCadastradoException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler (CredenciaisInvalidasException.class)
+    public ResponseEntity<String> tratarCredenciaisInvalidas(CredenciaisInvalidasException ex){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    @ExceptionHandler (DadosInvalidosException.class)
+    public ResponseEntity<String> tratarDadosInvalidos(DadosInvalidosException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     @ExceptionHandler (ValorInvalidoException.class)
     public ResponseEntity<String> tratarValorInvalido(ValorInvalidoException ex){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());

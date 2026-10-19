@@ -1,12 +1,12 @@
 package com.financeiro.financeiro.controller;
 
+import com.financeiro.financeiro.config.UsuarioLogado;
+import com.financeiro.financeiro.dto.CategoriaAtualizacaoDTO;
 import com.financeiro.financeiro.dto.CategoriaRequestDTO;
-import com.financeiro.financeiro.dto.UsuarioRequestDTO;
-import com.financeiro.financeiro.model.Categoria;
-import com.financeiro.financeiro.model.Usuario;
+import com.financeiro.financeiro.dto.CategoriaResponseDTO;
 import com.financeiro.financeiro.service.CategoriaService;
-import com.financeiro.financeiro.service.UsuarioService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,19 +20,18 @@ public class CategoriaController {
     }
 
     @PostMapping
-    public Categoria criar(@RequestBody CategoriaRequestDTO dto){
-        return  service.criar(dto.nome(),dto.idUsuario());
+    public CategoriaResponseDTO criar(@AuthenticationPrincipal Jwt jwt, @RequestBody CategoriaRequestDTO dto){
+        return service.criar(dto.nome(), UsuarioLogado.id(jwt));
     }
 
     @GetMapping
-    public List<Categoria> listarTodos(){
-        return service.listarTodos();
+    public List<CategoriaResponseDTO> listarPorUsuario(@AuthenticationPrincipal Jwt jwt){
+        return service.listarPorUsuario(UsuarioLogado.id(jwt));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Categoria> buscarPeloId(@PathVariable Long id){
-        return service.buscarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PutMapping("/{id}")
+    public CategoriaResponseDTO atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
+                                          @RequestBody CategoriaAtualizacaoDTO dto){
+        return service.atualizar(id, UsuarioLogado.id(jwt), dto.nome());
     }
 }

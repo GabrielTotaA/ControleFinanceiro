@@ -2,9 +2,11 @@ package com.financeiro.financeiro.service;
 
 import com.financeiro.financeiro.dto.ResumoCategoriaDTO;
 import com.financeiro.financeiro.dto.ResumoDTO;
+import com.financeiro.financeiro.dto.TransacaoResponseDTO;
 import com.financeiro.financeiro.exception.CategoriaNaoEncontradaException;
 import com.financeiro.financeiro.exception.CategoriaNaoPertenceAoUsuarioException;
 import com.financeiro.financeiro.exception.PeriodoInvalidoException;
+import com.financeiro.financeiro.exception.TransacaoNaoEncontradaException;
 import com.financeiro.financeiro.exception.UsuarioNaoEncontradoException;
 import com.financeiro.financeiro.model.*;
 import com.financeiro.financeiro.repository.CategoriaRepository;
@@ -30,20 +32,34 @@ public class TransacaoService {
         this.categoriaRepository = categoriaRepository;
     }
 
-    public Transacao criar(Long idUsuario, BigDecimal valor, LocalDate data, TipoTransacao tipo, Long idCategoria,
+    public TransacaoResponseDTO criar(Long idUsuario, BigDecimal valor, LocalDate data, TipoTransacao tipo, Long idCategoria,
                            FormaPagamento formaPagamento){
         Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(() -> new UsuarioNaoEncontradoException("Erro ao cadastrar transacao, usuario nao encontrado"));
         Categoria categoria = categoriaRepository.findById(idCategoria).orElseThrow(() -> new CategoriaNaoEncontradaException("Erro ao cadastrar transacao, categoria nao encontrada"));
         if (categoria.getUsuario() != null && !categoria.getUsuario().getId().equals(usuario.getId())){
             throw new CategoriaNaoPertenceAoUsuarioException("Essa categoria não pertence a este usuário");
         }
-        return transacaoRepository.save(new Transacao(valor,data,categoria, formaPagamento,tipo,usuario));
+        return TransacaoResponseDTO.de(transacaoRepository.save(new Transacao(valor,data,categoria, formaPagamento,tipo,usuario)));
     }
 
-    public List<Transacao> listarPorUsuario(Long idUsuario) {
+    public TransacaoResponseDTO atualizar(Long id, Long idUsuario, BigDecimal valor, LocalDate data, TipoTransacao tipo, Long idCategoria,
+                                          FormaPagamento formaPagamento){
+        Transacao transacao = transacaoRepository.findById(id)
+                .filter(t -> t.getUsuario().getId().equals(idUsuario))
+                .orElseThrow(() -> new TransacaoNaoEncontradaException("Transação não encontrada: " + id));
+        Categoria categoria = categoriaRepository.findById(idCategoria)
+                .orElseThrow(() -> new CategoriaNaoEncontradaException("Erro ao atualizar transacao, categoria nao encontrada"));
+        if (categoria.getUsuario() != null && !categoria.getUsuario().getId().equals(transacao.getUsuario().getId())){
+            throw new CategoriaNaoPertenceAoUsuarioException("Essa categoria não pertence a este usuário");
+        }
+        transacao.atualizar(valor, data, categoria, formaPagamento, tipo);
+        return TransacaoResponseDTO.de(transacaoRepository.save(transacao));
+    }
+
+    public List<TransacaoResponseDTO> listarPorUsuario(Long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado: " + idUsuario));
-        return transacaoRepository.findByUsuario(usuario);
+        return transacaoRepository.findByUsuario(usuario).stream().map(TransacaoResponseDTO::de).toList();
     }
 
     public ResumoDTO resumir(Long idUsuario, LocalDate inicio, LocalDate fim) {

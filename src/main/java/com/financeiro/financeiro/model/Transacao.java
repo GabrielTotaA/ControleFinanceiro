@@ -27,15 +27,28 @@ public class Transacao {
     public Transacao(){}
 
     public Transacao(BigDecimal valor, LocalDate data, Categoria categoria, FormaPagamento formaPagamento,TipoTransacao tipo, Usuario usuario){
-        if(valor.compareTo(BigDecimal.ZERO) <= 0){
-            throw new ValorInvalidoException("O valor da transação deve ser maior que zero");
-        }
+        validarValor(valor);
         this.valor = valor;
         this.data = data;
         this.categoria = categoria;
         this.formaPagamento = formaPagamento;
         this.tipo = tipo;
         this.usuario = usuario;
+    }
+
+    public void atualizar(BigDecimal valor, LocalDate data, Categoria categoria, FormaPagamento formaPagamento, TipoTransacao tipo){
+        validarValor(valor);
+        this.valor = valor;
+        this.data = data;
+        this.categoria = categoria;
+        this.formaPagamento = formaPagamento;
+        this.tipo = tipo;
+    }
+
+    private static void validarValor(BigDecimal valor){
+        if(valor.compareTo(BigDecimal.ZERO) <= 0){
+            throw new ValorInvalidoException("O valor da transação deve ser maior que zero");
+        }
     }
 
     public BigDecimal getValor() {

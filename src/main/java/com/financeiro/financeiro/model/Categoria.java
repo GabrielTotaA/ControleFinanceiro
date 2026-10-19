@@ -20,6 +20,10 @@ public class Categoria {
         this.usuario = usuario;
     }
 
+    public void renomear(String nome){
+        this.nome = nome;
+    }
+
     public String getNome(){return nome;}
 
     public Long getId() {return id;}

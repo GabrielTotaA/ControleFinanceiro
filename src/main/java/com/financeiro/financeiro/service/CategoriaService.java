@@ -1,15 +1,18 @@
 package com.financeiro.financeiro.service;
 
 
+import com.financeiro.financeiro.dto.CategoriaResponseDTO;
+import com.financeiro.financeiro.exception.CategoriaNaoEncontradaException;
+import com.financeiro.financeiro.exception.CategoriaNaoPertenceAoUsuarioException;
 import com.financeiro.financeiro.exception.UsuarioNaoEncontradoException;
 import com.financeiro.financeiro.model.Categoria;
 import com.financeiro.financeiro.model.Usuario;
 import com.financeiro.financeiro.repository.CategoriaRepository;
+import com.financeiro.financeiro.repository.TransacaoRepository;
 import com.financeiro.financeiro.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CategoriaService {
@@ -17,22 +20,36 @@ public class CategoriaService {
 
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository repository;
-    public CategoriaService(CategoriaRepository repository, UsuarioRepository usuarioRepository){
+    private final TransacaoRepository transacaoRepository;
+    public CategoriaService(CategoriaRepository repository, UsuarioRepository usuarioRepository, TransacaoRepository transacaoRepository){
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
+        this.transacaoRepository = transacaoRepository;
     }
 
-    public Categoria criar(String nome, Long idUsuario){
+    public CategoriaResponseDTO criar(String nome, Long idUsuario){
         Usuario usuario = usuarioRepository.findById(idUsuario).orElseThrow(() -> new UsuarioNaoEncontradoException("Erro ao cadastrar categoria"));
-        Categoria categoria = new Categoria(nome,usuario);
-        return repository.save(categoria);
+        Categoria categoria = repository.save(new Categoria(nome,usuario));
+        return new CategoriaResponseDTO(categoria.getId(), categoria.getNome(), 0L);
     }
 
-    public List<Categoria> listarTodos(){
-        return repository.findAll();
+    public List<CategoriaResponseDTO> listarPorUsuario(Long idUsuario){
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado: " + idUsuario));
+        return repository.listarComTotalPorUsuario(usuario);
     }
 
-    public Optional<Categoria> buscarPorId(Long id){
-        return repository.findById(id);
+    public CategoriaResponseDTO atualizar(Long id, Long idUsuario, String nome){
+        Categoria categoria = repository.findById(id)
+                .orElseThrow(() -> new CategoriaNaoEncontradaException("Categoria não encontrada: " + id));
+        if (categoria.getUsuario() == null){
+            throw new CategoriaNaoPertenceAoUsuarioException("Categorias compartilhadas não podem ser editadas");
+        }
+        if (!categoria.getUsuario().getId().equals(idUsuario)){
+            throw new CategoriaNaoEncontradaException("Categoria não encontrada: " + id);
+        }
+        categoria.renomear(nome);
+        repository.save(categoria);
+        return new CategoriaResponseDTO(categoria.getId(), categoria.getNome(), transacaoRepository.countByCategoria(categoria));
     }
 }

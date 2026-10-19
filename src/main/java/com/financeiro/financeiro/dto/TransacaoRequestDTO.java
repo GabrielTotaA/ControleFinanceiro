@@ -6,6 +6,6 @@ import com.financeiro.financeiro.model.TipoTransacao;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record TransacaoRequestDTO(Long idUsuario, BigDecimal valor, LocalDate data, TipoTransacao tipo, Long idCategoria,
+public record TransacaoRequestDTO(BigDecimal valor, LocalDate data, TipoTransacao tipo, Long idCategoria,
                                   FormaPagamento formaPagamento) {
 }

@@ -1,5 +1,6 @@
 package com.financeiro.financeiro.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,12 +13,16 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String nome;
-//    private Categorias categorias;
+    @Column(unique = true)
+    private String email;
+    private String senhaHash;
 
     public Usuario(){}
 
-    public Usuario(String nome){
+    public Usuario(String nome, String email, String senhaHash){
         this.nome = nome;
+        this.email = email;
+        this.senhaHash = senhaHash;
     }
 
     public String getNome(){
@@ -26,5 +31,13 @@ public class Usuario {
 
     public Long getId(){
         return id;
+    }
+
+    public String getEmail(){
+        return email;
+    }
+
+    public String getSenhaHash(){
+        return senhaHash;
     }
 }
